@@ -1,15 +1,7 @@
-import unittest
 import sys
-
-try:
-    from unittest import mock
-except ImportError:
-    import mock
-
-try:
-        from StringIO import StringIO
-except ImportError:
-        from io import StringIO
+import unittest
+from io import StringIO
+from unittest import mock
 
 import vdf
 
@@ -127,10 +119,6 @@ class testcase_routine_parse(unittest.TestCase):
     def test_parse_bom_removal(self):
         result = vdf.loads(vdf.BOMS + '"asd" "123"')
         self.assertEqual(result, {'asd': '123'})
-
-        if sys.version_info[0] == 2:
-            result = vdf.loads(vdf.BOMS_UNICODE + '"asd" "123"')
-            self.assertEqual(result, {'asd': '123'})
 
     def test_parse_source_asserts(self):
         for t in ['', 5, 5.5, 1.0j, True, None, (), {}, lambda: 0]:

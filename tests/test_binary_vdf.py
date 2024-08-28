@@ -5,8 +5,6 @@ import vdf
 from io import BytesIO
 from collections import OrderedDict
 
-u = str if sys.version_info >= (3,) else unicode
-
 
 class BinaryVDF(unittest.TestCase):
     def test_BASE_INT(self):
@@ -60,10 +58,10 @@ class BinaryVDF(unittest.TestCase):
         self.assertEqual(buf.getvalue(), b'')
 
     def test_dumps_unicode(self):
-        self.assertEqual(vdf.binary_dumps({u('a'): u('b')}), b'\x01a\x00b\x00\x08')
+        self.assertEqual(vdf.binary_dumps({'a': 'b'}), b'\x01a\x00b\x00\x08')
 
     def test_dumps_unicode_alternative(self):
-        self.assertEqual(vdf.binary_dumps({u('a'): u('b')}, alt_format=True), b'\x01a\x00b\x00\x0b')
+        self.assertEqual(vdf.binary_dumps({'a': 'b'}, alt_format=True), b'\x01a\x00b\x00\x0b')
 
     def test_dump_params_invalid(self):
         with self.assertRaises(TypeError):

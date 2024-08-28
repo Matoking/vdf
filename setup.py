@@ -18,6 +18,7 @@ setup(
     author='Rossen Georgiev',
     author_email='rossen@rgp.io',
     license='MIT',
+    python_requires=">=3.6",
     classifiers=[
         'Development Status :: 5 - Production/Stable',
         'Intended Audience :: Developers',
@@ -25,9 +26,6 @@ setup(
         'Topic :: Software Development :: Libraries :: Python Modules',
         'Natural Language :: English',
         'Operating System :: OS Independent',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',

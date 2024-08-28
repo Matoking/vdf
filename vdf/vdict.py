@@ -1,27 +1,16 @@
 import sys
-from collections import Counter
+from collections import Counter, abc
 
-if sys.version_info[0] >= 3:
-    _iter_values = 'values'
-    _range = range
-    _string_type = str
-    import collections.abc as _c
-    class _kView(_c.KeysView):
-        def __iter__(self):
-            return self._mapping.iterkeys()
-    class _vView(_c.ValuesView):
-        def __iter__(self):
-            return self._mapping.itervalues()
-    class _iView(_c.ItemsView):
-        def __iter__(self):
-            return self._mapping.iteritems()
-else:
-    _iter_values = 'itervalues'
-    _range = xrange
-    _string_type = basestring
-    _kView = lambda x: list(x.iterkeys())
-    _vView = lambda x: list(x.itervalues())
-    _iView = lambda x: list(x.iteritems())
+
+class _kView(abc.KeysView):
+    def __iter__(self):
+        return self._mapping.iterkeys()
+class _vView(abc.ValuesView):
+    def __iter__(self):
+        return self._mapping.itervalues()
+class _iView(abc.ItemsView):
+    def __iter__(self):
+        return self._mapping.iteritems()
 
 
 class VDFDict(dict):
@@ -58,11 +47,11 @@ class VDFDict(dict):
             raise ValueError("Expected key tuple length to be 2, got %d" % len(key))
         if not isinstance(key[0], int):
             raise TypeError("Key index should be an int")
-        if not isinstance(key[1], _string_type):
+        if not isinstance(key[1], str):
             raise TypeError("Key value should be a str")
 
     def _normalize_key(self, key):
-        if isinstance(key, _string_type):
+        if isinstance(key, str):
             key = (0, key)
         elif isinstance(key, tuple):
             self._verify_key_tuple(key)
@@ -71,7 +60,7 @@ class VDFDict(dict):
         return key
 
     def __setitem__(self, key, value):
-        if isinstance(key, _string_type):
+        if isinstance(key, str):
             key = (self.__kcount[key], key)
             self.__omap.append(key)
         elif isinstance(key, tuple):
@@ -98,7 +87,7 @@ class VDFDict(dict):
         tail_count = self.__kcount[skey] - dup_idx
 
         if tail_count > 0:
-            for idx in _range(start_idx, len(self.__omap)):
+            for idx in range(start_idx, len(self.__omap)):
                 if self.__omap[idx][1] == skey:
                     oldkey = self.__omap[idx]
                     newkey = (dup_idx, skey)
@@ -185,16 +174,16 @@ class VDFDict(dict):
 
     def get_all_for(self, key):
         """ Returns all values of the given key """
-        if not isinstance(key, _string_type):
+        if not isinstance(key, str):
             raise TypeError("Key needs to be a string.")
-        return [self[(idx, key)] for idx in _range(self.__kcount[key])]
+        return [self[(idx, key)] for idx in range(self.__kcount[key])]
 
     def remove_all_for(self, key):
         """ Removes all items with the given key """
-        if not isinstance(key, _string_type):
+        if not isinstance(key, str):
             raise TypeError("Key need to be a string.")
 
-        for idx in _range(self.__kcount[key]):
+        for idx in range(self.__kcount[key]):
             super(VDFDict, self).__delitem__((idx, key))
 
         self.__omap = list(filter(lambda x: x[1] != key, self.__omap))
@@ -206,12 +195,12 @@ class VDFDict(dict):
         Returns ``True`` if the dict contains keys with duplicates.
         Recurses through any all keys with value that is ``VDFDict``.
         """
-        for n in getattr(self.__kcount, _iter_values)():
+        for n in self.__kcount.values():
             if n != 1:
                 return True
 
         def dict_recurse(obj):
-            for v in getattr(obj, _iter_values)():
+            for v in obj.values():
                 if isinstance(v, VDFDict) and v.has_duplicates():
                     return True
                 elif isinstance(v, dict):

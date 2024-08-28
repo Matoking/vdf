@@ -5,36 +5,18 @@ __version__ = "3.5"
 __author__ = "Rossen Georgiev"
 
 import re
-import sys
 import struct
+import sys
 from binascii import crc32
-from io import BytesIO
-from io import StringIO as unicodeIO
-
-try:
-    from collections.abc import Mapping
-except:
-    from collections import Mapping
+from collections.abc import Mapping
+from io import BytesIO, StringIO
 
 from vdf.vdict import VDFDict
 
-# Py2 & Py3 compatibility
-if sys.version_info[0] >= 3:
-    string_type = str
-    int_type = int
-    BOMS = '\ufffe\ufeff'
+BOMS = '\ufffe\ufeff'
 
-    def strip_bom(line):
-        return line.lstrip(BOMS)
-else:
-    from StringIO import StringIO as strIO
-    string_type = basestring
-    int_type = long
-    BOMS = '\xef\xbb\xbf\xff\xfe\xfe\xff'
-    BOMS_UNICODE = '\\ufffe\\ufeff'.decode('unicode-escape')
-
-    def strip_bom(line):
-        return line.lstrip(BOMS if isinstance(line, str) else BOMS_UNICODE)
+def strip_bom(line):
+    return line.lstrip(BOMS)
 
 # string escaping
 _unescape_char_map = {
@@ -192,13 +174,13 @@ def loads(s, **kwargs):
     Deserialize ``s`` (a ``str`` or ``unicode`` instance containing a JSON
     document) to a Python object.
     """
-    if not isinstance(s, string_type):
+    if not isinstance(s, str):
         raise TypeError("Expected s to be a str, got %s" % type(s))
 
     try:
-        fp = unicodeIO(s)
+        fp = StringIO(s)
     except TypeError:
-        fp = strIO(s)
+        fp = BytesIO(s)
 
     return parse(fp, **kwargs)
 
@@ -255,7 +237,7 @@ def _dump_gen(data, pretty=False, escaped=True, acf=False, level=0):
         val_sep = "\t\t"
 
     for key, value in data.items():
-        if escaped and isinstance(key, string_type):
+        if escaped and isinstance(key, str):
             key = _escape(key)
 
         if isinstance(value, Mapping):
@@ -264,14 +246,14 @@ def _dump_gen(data, pretty=False, escaped=True, acf=False, level=0):
                 yield chunk
             yield "%s}\n" % line_indent
         else:
-            if escaped and isinstance(value, string_type):
+            if escaped and isinstance(value, str):
                 value = _escape(value)
 
             yield '%s"%s"%s"%s"\n' % (line_indent, key, val_sep, value)
 
 
 # binary VDF
-class BASE_INT(int_type):
+class BASE_INT(int):
     def __repr__(self):
         return "%s(%d)" % (self.__class__.__name__, self)
 
@@ -473,7 +455,7 @@ def _binary_dump_gen(obj, level=0, alt_format=False):
     float32 = struct.Struct('<f')
 
     for key, value in obj.items():
-        if isinstance(key, string_type):
+        if isinstance(key, str):
             key = key.encode('utf-8')
         else:
             raise TypeError("dict keys must be of type str, got %s" % type(key))
@@ -486,7 +468,7 @@ def _binary_dump_gen(obj, level=0, alt_format=False):
             yield BIN_UINT64 + key + BIN_NONE + uint64.pack(value)
         elif isinstance(value, INT_64):
             yield BIN_INT64 + key + BIN_NONE + int64.pack(value)
-        elif isinstance(value, string_type):
+        elif isinstance(value, str):
             try:
                 value = value.encode('utf-8') + BIN_NONE
                 yield BIN_STRING
@@ -496,7 +478,7 @@ def _binary_dump_gen(obj, level=0, alt_format=False):
             yield key + BIN_NONE + value
         elif isinstance(value, float):
             yield BIN_FLOAT32 + key + BIN_NONE + float32.pack(value)
-        elif isinstance(value, (COLOR, POINTER, int, int_type)):
+        elif isinstance(value, (COLOR, POINTER, int)):
             if isinstance(value, COLOR):
                 yield BIN_COLOR
             elif isinstance(value, POINTER):
